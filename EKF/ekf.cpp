@@ -61,6 +61,8 @@ void Ekf::reset(uint64_t timestamp)
 	_imu_down_sampled.delta_vel.setZero();
 	_imu_down_sampled.delta_ang_dt = 0.0f;
 	_imu_down_sampled.delta_vel_dt = 0.0f;
+	_imu_down_sampled.delta_vel_samples = 0;
+	_imu_down_sampled.delta_vel_clip_count = 0;
 	_imu_down_sampled.time_us = timestamp;
 
 	_q_down_sampled(0) = 1.0f;
@@ -387,6 +389,8 @@ bool Ekf::collect_imu(const imuSample &imu)
 	// accumulate the time deltas
 	_imu_down_sampled.delta_ang_dt += imu.delta_ang_dt;
 	_imu_down_sampled.delta_vel_dt += imu.delta_vel_dt;
+	_imu_down_sampled.delta_vel_samples += imu.delta_vel_samples;
+	_imu_down_sampled.delta_vel_clip_count += imu.delta_vel_clip_count;
 
 	// use a quaternion to accumulate delta angle data
 	// this quaternion represents the rotation from the start to end of the accumulation period
@@ -419,6 +423,8 @@ bool Ekf::collect_imu(const imuSample &imu)
 		imu_sample_new.delta_vel = _imu_down_sampled.delta_vel;
 		imu_sample_new.delta_ang_dt = _imu_down_sampled.delta_ang_dt;
 		imu_sample_new.delta_vel_dt = _imu_down_sampled.delta_vel_dt;
+		imu_sample_new.delta_vel_samples = _imu_down_sampled.delta_vel_samples;
+		imu_sample_new.delta_vel_clip_count = _imu_down_sampled.delta_vel_clip_count;
 		imu_sample_new.time_us = imu.time_us;
 
 		_imu_buffer.push(imu_sample_new);
@@ -435,6 +441,8 @@ bool Ekf::collect_imu(const imuSample &imu)
 		_imu_down_sampled.delta_vel.setZero();
 		_imu_down_sampled.delta_ang_dt = 0.0f;
 		_imu_down_sampled.delta_vel_dt = 0.0f;
+		_imu_down_sampled.delta_vel_samples = 0;
+		_imu_down_sampled.delta_vel_clip_count = 0;
 		_q_down_sampled(0) = 1.0f;
 		_q_down_sampled(1) = _q_down_sampled(2) = _q_down_sampled(3) = 0.0f;
 

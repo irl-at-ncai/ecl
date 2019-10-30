@@ -109,6 +109,8 @@ struct imuSample {
 	float       delta_ang_dt;	///< delta angle integration period (sec)
 	float       delta_vel_dt;	///< delta velocity integration period (sec)
 	uint64_t    time_us;		///< timestamp of the measurement (uSec)
+	uint8_t     delta_vel_clip_count{0}; ///< accelerometer total clip count per delta velocity
+	uint8_t     delta_vel_samples{0}; ///< samples per delta velocity
 };
 
 struct gpsSample {
@@ -237,6 +239,8 @@ struct parameters {
 	// input noise
 	float gyro_noise{1.5e-2f};		///< IMU angular rate noise used for covariance prediction (rad/sec)
 	float accel_noise{3.5e-1f};		///< IMU acceleration noise use for covariance prediction (m/sec**2)
+	float accel_noise_clipping_factor{2.0f};	///< IMU acceleration noise multiplier during clipping
+
 
 	// process noise
 	float gyro_bias_p_noise{1.0e-3f};	///< process noise for IMU rate gyro bias prediction (rad/sec**2)
@@ -301,8 +305,8 @@ struct parameters {
 	int32_t range_signal_hysteresis_ms{1000}; 	///< minimum duration during which the reported range finder signal quality needs to be non-zero in order to be declared valid (ms)
 
 	// vision position fusion
-        float ev_vel_innov_gate{3.0f};		///< vision velocity fusion innovation consistency gate size (STD)
-        float ev_pos_innov_gate{5.0f};		///< vision position fusion innovation consistency gate size (STD)
+	float ev_vel_innov_gate{3.0f};		///< vision velocity fusion innovation consistency gate size (STD)
+	float ev_pos_innov_gate{5.0f};		///< vision position fusion innovation consistency gate size (STD)
 
 	// optical flow fusion
 	float flow_noise{0.15f};		///< observation noise for optical flow LOS rate measurements (rad/sec)

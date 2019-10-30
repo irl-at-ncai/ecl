@@ -260,11 +260,18 @@ void Ekf::predictCovariance()
 
 	// assign IMU noise variances
 	// inputs to the system are 3 delta angles and 3 delta velocities
+	const float gyro_noise = math::constrain(_params.gyro_noise, 0.0f, 1.0f);
 	float daxVar, dayVar, dazVar;
-	float dvxVar, dvyVar, dvzVar;
-	float gyro_noise = math::constrain(_params.gyro_noise, 0.0f, 1.0f);
 	daxVar = dayVar = dazVar = sq(dt * gyro_noise);
+
 	float accel_noise = math::constrain(_params.accel_noise, 0.0f, 1.0f);
+
+	if (_imu_sample_delayed.delta_vel_clip_count > 0 && _imu_sample_delayed.delta_vel_samples > 0) {
+		// total clip count across every axis
+		const float clipping_fraction = (float)_imu_sample_delayed.delta_vel_clip_count / ((float)_imu_sample_delayed.delta_vel_samples * 3.0f);
+
+		accel_noise += _params.accel_noise_clipping_factor * clipping_fraction;
+	}
 
 	if (_bad_vert_accel_detected) {
 		// Increase accelerometer process noise if bad accel data is detected. Measurement errors due to
@@ -272,6 +279,7 @@ void Ekf::predictCovariance()
 		accel_noise = BADACC_BIAS_PNOISE;
 	}
 
+	float dvxVar, dvyVar, dvzVar;
 	dvxVar = dvyVar = dvzVar = sq(dt * accel_noise);
 
 	// predict the covariance

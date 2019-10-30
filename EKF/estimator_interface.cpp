@@ -528,6 +528,8 @@ bool EstimatorInterface::initialise_interface(uint64_t timestamp)
 	_imu_sample_delayed.delta_vel.setZero();
 	_imu_sample_delayed.delta_ang_dt = 0.0f;
 	_imu_sample_delayed.delta_vel_dt = 0.0f;
+	_imu_sample_delayed.delta_vel_samples = 0;
+	_imu_sample_delayed.delta_vel_clip_count = 0;
 	_imu_sample_delayed.time_us = timestamp;
 
 	_initialised = false;
