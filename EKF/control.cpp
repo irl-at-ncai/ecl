@@ -559,8 +559,8 @@ void Ekf::controlGpsFusion()
 
 		// Determine if we should use GPS aiding for velocity and horizontal position
 		// To start using GPS we need angular alignment completed, the local NED origin set and GPS data that has not failed checks recently
-		bool gps_checks_passing = (_time_last_imu - _last_gps_fail_us > (uint64_t)5e6);
-		bool gps_checks_failing = (_time_last_imu - _last_gps_pass_us > (uint64_t)5e6);
+		bool gps_checks_passing = (_time_last_imu - _last_gps_fail_us > (uint64_t)1e6);
+		bool gps_checks_failing = (_time_last_imu - _last_gps_pass_us > (uint64_t)1e6);
 		if ((_params.fusion_mode & MASK_USE_GPS) && !_control_status.flags.gps) {
 			if (_control_status.flags.tilt_align && _NED_origin_initialised && gps_checks_passing) {
 				// If the heading is not aligned, reset the yaw and magnetic field states
