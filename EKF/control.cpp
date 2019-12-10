@@ -305,8 +305,10 @@ void Ekf::controlExternalVisionFusion()
 					_ev_pos_innov(1) = _state.pos(1) - _hpos_pred_prev(1) - ev_delta_pos(1);
 
 					// observation 1-STD error, incremental pos observation is expected to have more uncertainty
-					ev_pos_obs_var(0) = fmaxf(_ev_sample_delayed.posVar(0), sq(0.5f));
-					ev_pos_obs_var(1) = fmaxf(_ev_sample_delayed.posVar(1), sq(0.5f));
+					Matrix3f ev_pos_var = matrix::diag(_ev_sample_delayed.posVar);
+					ev_pos_var = _ev_rot_mat * ev_pos_var * _ev_rot_mat.transpose();
+					ev_pos_obs_var(0) = fmaxf(ev_pos_var(0, 0), sq(0.5f));
+					ev_pos_obs_var(1) = fmaxf(ev_pos_var(1, 1), sq(0.5f));
 				}
 
 				// record observation and estimate for use next time
@@ -317,14 +319,16 @@ void Ekf::controlExternalVisionFusion()
 			} else {
 				// use the absolute position
 				Vector3f ev_pos_meas = _ev_sample_delayed.pos;
+				Matrix3f ev_pos_var = matrix::diag(_ev_sample_delayed.posVar);
 				if (_params.fusion_mode & MASK_ROTATE_EV) {
 					ev_pos_meas = _ev_rot_mat * ev_pos_meas;
+					ev_pos_var = _ev_rot_mat * ev_pos_var * _ev_rot_mat.transpose();
 				}
 				_ev_pos_innov(0) = _state.pos(0) - ev_pos_meas(0);
 				_ev_pos_innov(1) = _state.pos(1) - ev_pos_meas(1);
 
-				ev_pos_obs_var(0) = fmaxf(_ev_sample_delayed.posVar(0), sq(0.01f));
-				ev_pos_obs_var(1) = fmaxf(_ev_sample_delayed.posVar(1), sq(0.01f));
+				ev_pos_obs_var(0) = fmaxf(ev_pos_var(0, 0), sq(0.01f));
+				ev_pos_obs_var(1) = fmaxf(ev_pos_var(1, 0), sq(0.01f));
 
 				// check if we have been deadreckoning too long
 				if ((_time_last_imu - _time_last_hor_pos_fuse) > _params.reset_timeout_max) {
@@ -350,10 +354,12 @@ void Ekf::controlExternalVisionFusion()
 			Vector2f ev_vel_innov_gates{};
 
 			Vector3f vel_aligned{_ev_sample_delayed.vel};
+			Matrix3f ev_vel_var = matrix::diag(_ev_sample_delayed.velVar);
 
 			// rotate measurement into correct earth frame if required
 			if (_params.fusion_mode & MASK_ROTATE_EV) {
 				vel_aligned = _ev_rot_mat * _ev_sample_delayed.vel;
+				ev_vel_var = _ev_rot_mat * ev_vel_var * _ev_rot_mat.transpose();
 			}
 
 			// correct velocity for offset relative to IMU
@@ -373,7 +379,7 @@ void Ekf::controlExternalVisionFusion()
 				}
 			}
 
-			ev_vel_obs_var = matrix::max(_ev_sample_delayed.velVar, sq(0.01f));
+			ev_vel_obs_var = matrix::max(ev_vel_var.diag(), sq(0.01f));
 
 			ev_vel_innov_gates(0) = ev_vel_innov_gates(1) = fmaxf(_params.ev_vel_innov_gate, 1.0f);
 
